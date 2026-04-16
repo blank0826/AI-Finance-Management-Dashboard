@@ -1,0 +1,1 @@
+{"name":"Local: JwtAuthFilter","url":"f:\\finance-dashboard\\backend\\src\\main\\java\\com\\finance\\security\\JwtAuthFilter.java","tests":[{"id":1775999846554,"input":"","output":""}],"interactive":false,"memoryLimit":1024,"timeLimit":3000,"srcPath":"f:\\finance-dashboard\\backend\\src\\main\\java\\com\\finance\\security\\JwtAuthFilter.java","group":"local","local":true}

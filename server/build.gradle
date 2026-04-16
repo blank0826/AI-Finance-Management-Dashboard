@@ -1,0 +1,74 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.0'
+    id 'io.spring.dependency-management' version '1.1.4'
+}
+
+group = 'com.finance'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework:spring-test'
+    
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
+    // PDF parsing
+    implementation 'org.apache.pdfbox:pdfbox:3.0.1'
+
+    // CSV parsing
+    implementation 'com.opencsv:opencsv:5.9'
+
+    // Excel export
+    implementation 'org.apache.poi:poi-ooxml:5.2.5'
+
+    // PDF report generation
+    implementation 'com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10'
+
+    // Database
+    runtimeOnly 'org.postgresql:postgresql'
+    runtimeOnly 'com.h2database:h2'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.40'
+    annotationProcessor 'org.projectlombok:lombok:1.18.40'
+    testCompileOnly 'org.projectlombok:lombok:1.18.40'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.40'
+
+    // Cloudinary
+    implementation 'com.cloudinary:cloudinary-http44:1.36.0'
+
+    // JSON
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+bootRun {
+  jvmArgs = ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005']
+}

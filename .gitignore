@@ -1,0 +1,22 @@
+# Server
+server/build/
+server/.gradle/
+server/*.class
+server/.env
+server/bin
+
+# Client
+client/node_modules/
+client/build/
+client/.env.local
+client/.env
+
+# General
+.DS_Store
+*.log
+*.iml
+.idea/
+.vscode/
+*.class
+
+finance-dashboard.code-workspace
