@@ -92,10 +92,6 @@ export default function Dashboard() {
             className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
             Excel
           </button>
-          <button onClick={() => handleExport('pdf')}
-            className="px-4 py-2 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
-            PDF
-          </button>
         </div>
       </div>
 

@@ -52,8 +52,6 @@ dependencies {
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.40'
     annotationProcessor 'org.projectlombok:lombok:1.18.40'
-    testCompileOnly 'org.projectlombok:lombok:1.18.40'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.40'
 
     // Cloudinary
     implementation 'com.cloudinary:cloudinary-http44:1.36.0'
