@@ -14,21 +14,21 @@ import java.time.Duration;
 import java.util.*;
 
 @Service
-public class OllamaService {
+public class GroqService {
 
-    @Value("${app.ollama.base-url:http://localhost:11434}")
-    private String baseUrl;
+    @Value("${app.groq.api-key:}")
+    private String apiKey;
 
-    @Value("${app.ollama.model:qwen2.5:7b}")
-    private String model;
+    private static final String GROQ_URL =
+        "https://api.groq.com/openai/v1/chat/completions";
+    private static final String MODEL = "llama-3.1-8b-instant";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private static final Logger log = LoggerFactory.getLogger(OllamaService.class);
+    private static final Logger log = LoggerFactory.getLogger(GroqService.class);
 
     public record TransactionInput(String description, double amount, String type) {}
 
-    // ── Category map for rule-based pre-filtering ─────────────────────────────
-    // Handles obvious cases before sending to AI — reduces AI inconsistency
+    // ── Same keyword map as OllamaService ─────────────────────────────────────
     private static final Map<String, Category> KEYWORD_MAP = new LinkedHashMap<>();
 
     static {
@@ -86,8 +86,14 @@ public class OllamaService {
         KEYWORD_MAP.put("rapido",              Category.TRAVEL_AND_TRANSPORT);
         KEYWORD_MAP.put("irctc",               Category.TRAVEL_AND_TRANSPORT);
         KEYWORD_MAP.put("fastag",              Category.TRAVEL_AND_TRANSPORT);
-        // Transfer — personal payments
+        // Transfer
         KEYWORD_MAP.put("money sent to",       Category.TRANSFER);
+    }
+
+    // ── Availability check ────────────────────────────────────────────────────
+
+    public boolean isAvailable() {
+        return apiKey != null && !apiKey.isBlank();
     }
 
     // ── Categorization ────────────────────────────────────────────────────────
@@ -97,7 +103,7 @@ public class OllamaService {
         List<Integer> aiIndexes = new ArrayList<>();
         List<TransactionInput> aiInputs = new ArrayList<>();
 
-        // Step 1: Pre-filter with keyword map — consistent for known merchants
+        // Step 1: Pre-filter with keyword map
         for (int i = 0; i < transactions.size(); i++) {
             TransactionInput t = transactions.get(i);
             Category keywordCategory = matchKeyword(t.description());
@@ -106,22 +112,22 @@ public class OllamaService {
                 results.add(keywordCategory.name());
                 log.debug("Keyword match: {} -> {}", t.description(), keywordCategory);
             } else {
-                results.add(null); // placeholder for AI result
+                results.add(null);
                 aiIndexes.add(i);
                 aiInputs.add(t);
             }
         }
 
-        // Step 2: Send only unmatched transactions to AI
+        // Step 2: Send only unmatched to Groq AI
         if (!aiInputs.isEmpty()) {
-            log.info("Sending {} transactions to AI...", aiInputs.size());
+            log.info("Sending {} transactions to Groq...", aiInputs.size());
             List<String> aiResults = callAiForCategories(aiInputs);
 
             for (int i = 0; i < aiIndexes.size(); i++) {
                 int originalIndex = aiIndexes.get(i);
                 String aiCategory = i < aiResults.size() ? aiResults.get(i) : "OTHER";
                 results.set(originalIndex, aiCategory);
-                log.debug("AI categorized: {} -> {}", aiInputs.get(i).description(), aiCategory);
+                log.debug("Groq categorized: {} -> {}", aiInputs.get(i).description(), aiCategory);
             }
         }
 
@@ -132,7 +138,7 @@ public class OllamaService {
         if (description == null) return null;
         String lower = description.toLowerCase();
 
-        // Check transfer patterns first
+        // Transfer pattern
         if (lower.startsWith("paid to ") &&
             !lower.contains("zomato") && !lower.contains("swiggy") &&
             !lower.contains("compass") && !lower.contains("smartq") &&
@@ -143,19 +149,18 @@ public class OllamaService {
             return Category.TRANSFER;
         }
 
-        // Check keyword map
         for (Map.Entry<String, Category> entry : KEYWORD_MAP.entrySet()) {
             if (lower.contains(entry.getKey())) {
                 return entry.getValue();
             }
         }
 
-        return null; // send to AI
+        return null;
     }
 
     private List<String> callAiForCategories(List<TransactionInput> transactions) {
         String prompt = buildCategorizationPrompt(transactions);
-        String response = callOllama(prompt);
+        String response = callGroq(prompt);
         return parseCategories(response, transactions.size());
     }
 
@@ -192,7 +197,7 @@ public class OllamaService {
                 .trim();
 
             int start = cleaned.indexOf('[');
-            int end = cleaned.lastIndexOf(']') + 1;
+            int end   = cleaned.lastIndexOf(']') + 1;
 
             if (start >= 0 && end > start) {
                 cleaned = cleaned.substring(start, end);
@@ -211,7 +216,7 @@ public class OllamaService {
             return categories;
 
         } catch (Exception e) {
-            log.error("Parse failed while parsing categories", e);
+            log.error("Parse failed while parsing Groq categories", e);
             log.debug("Raw response: {}", response);
             List<String> fallback = new ArrayList<>();
             for (int i = 0; i < expectedCount; i++) fallback.add("OTHER");
@@ -226,7 +231,7 @@ public class OllamaService {
                                           int year, int month) {
         String prompt = buildSummaryPrompt(
             spendingByCategory, totalSpending, totalIncome, year, month);
-        return callOllama(prompt);
+        return callGroq(prompt);
     }
 
     private String buildSummaryPrompt(Map<String, Double> spendingByCategory,
@@ -249,27 +254,20 @@ public class OllamaService {
         return sb.toString();
     }
 
-    // ── Ollama API Call ───────────────────────────────────────────────────────
+    // ── Groq API Call ─────────────────────────────────────────────────────────
 
-    private String callOllama(String userMessage) {
+    private String callGroq(String userMessage) {
         try {
-            String url = baseUrl + "/api/chat";
-
             Map<String, Object> body = new LinkedHashMap<>();
-            body.put("model", model);
+            body.put("model", MODEL);
             body.put("messages", List.of(
                 Map.of("role", "system",
                        "content", "You are a precise classification assistant. " +
                                   "Output only what is requested. No explanations."),
                 Map.of("role", "user", "content", userMessage)
             ));
-            body.put("stream", false);
-            body.put("think", false);
-            body.put("options", Map.of(
-                "temperature", 0,
-                "num_predict", 512,
-                "num_ctx",     2048
-            ));
+            body.put("temperature", 0);
+            body.put("max_tokens", 512);
 
             String requestBody = objectMapper.writeValueAsString(body);
 
@@ -279,9 +277,10 @@ public class OllamaService {
                 .build();
 
             HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
+                .uri(URI.create(GROQ_URL))
                 .header("Content-Type", "application/json")
-                .timeout(Duration.ofSeconds(180))
+                .header("Authorization", "Bearer " + apiKey)
+                .timeout(Duration.ofSeconds(30))
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();
 
@@ -290,25 +289,20 @@ public class OllamaService {
 
             if (response.statusCode() != 200) {
                 throw new RuntimeException(
-                    "Ollama error " + response.statusCode() + ": " + response.body());
+                    "Groq error " + response.statusCode() + ": " + response.body());
             }
 
+            // Groq uses OpenAI response format:
+            // { "choices": [{ "message": { "content": "..." } }] }
             JsonNode root = objectMapper.readTree(response.body());
-            String doneReason = root.path("done_reason").asText();
+            String content = root.path("choices").get(0)
+                .path("message").path("content").asText();
 
-            if ("length".equals(doneReason)) {
-                log.warn("Response truncated by model (done_reason=length) — consider reducing batch size or increasing num_predict");
-            }
-
-            String content = root.path("message").path("content").asText();
-            if (content.isBlank()) {
-                content = root.path("message").path("thinking").asText();
-            }
-
+            log.debug("Groq response length: {}", content.length());
             return content;
 
         } catch (Exception e) {
-            throw new RuntimeException("Ollama API call failed: " + e.getMessage(), e);
+            throw new RuntimeException("Groq API call failed: " + e.getMessage(), e);
         }
     }
 

@@ -18,7 +18,7 @@ class StatementServiceCategorizeAllTest {
     @Test
     void categorizeAll_usesAiAndFallback() throws Exception {
         StatementService svc = new StatementService();
-        OllamaService ollama = mock(OllamaService.class);
+        GroqService groqService = mock(GroqService.class);
 
         // Prepare parsed transactions
         PdfParserService.ParsedTransaction p1 = new PdfParserService.ParsedTransaction(
@@ -27,12 +27,12 @@ class StatementServiceCategorizeAllTest {
             LocalDate.of(2026,4,2), "Zomato food", BigDecimal.valueOf(200), Transaction.TransactionType.DEBIT);
 
         // Make AI return categories for both transactions
-        when(ollama.categorizeTransactions(org.mockito.ArgumentMatchers.anyList()))
+        when(groqService.categorizeTransactions(org.mockito.ArgumentMatchers.anyList()))
             .thenReturn(List.of("OTHER", "FOOD_AND_DINING"));
-        when(ollama.parseCategory("OTHER")).thenReturn(Transaction.Category.OTHER);
-        when(ollama.parseCategory("FOOD_AND_DINING")).thenReturn(Transaction.Category.FOOD_AND_DINING);
+        when(groqService.parseCategory("OTHER")).thenReturn(Transaction.Category.OTHER);
+        when(groqService.parseCategory("FOOD_AND_DINING")).thenReturn(Transaction.Category.FOOD_AND_DINING);
 
-        ReflectionTestUtils.setField(svc, "ollamaService", ollama);
+        ReflectionTestUtils.setField(svc, "groqService", groqService);
 
         Method categorizeAll = StatementService.class.getDeclaredMethod("categorizeAll", java.util.List.class);
         categorizeAll.setAccessible(true);

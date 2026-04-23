@@ -15,14 +15,14 @@ import com.finance.entity.User;
 import com.finance.repository.StatementUploadRepository;
 import com.finance.repository.TransactionRepository;
 import com.finance.repository.UserRepository;
-import com.finance.service.OllamaService.TransactionInput;
+import com.finance.service.GroqService.TransactionInput;
 
 @Service
 public class StatementService {
 
     @Autowired private PdfParserService pdfParser;
     @Autowired private CsvParserService csvParser;
-    @Autowired private OllamaService ollamaService;
+    @Autowired private GroqService groqService;
     @Autowired private CloudinaryService cloudinaryService;
     @Autowired private TransactionRepository transactionRepo;
     @Autowired private StatementUploadRepository uploadRepo;
@@ -144,9 +144,9 @@ public class StatementService {
                 .toList();
 
             try {
-                List<String> rawCategories = ollamaService.categorizeTransactions(inputs);
+                List<String> rawCategories = groqService.categorizeTransactions(inputs);
                 rawCategories.stream()
-                    .map(ollamaService::parseCategory)
+                    .map(groqService::parseCategory)
                     .forEach(allCategories::add);
 
                 // // Pause between batches to respect free tier rate limits

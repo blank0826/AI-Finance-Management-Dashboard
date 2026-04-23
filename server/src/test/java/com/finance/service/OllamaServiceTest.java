@@ -6,13 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
 import com.finance.entity.Transaction.Category;
-import com.finance.service.OllamaService.TransactionInput;
+import com.finance.service.GroqService.TransactionInput;
 
-class OllamaServiceTest {
+class GroqServiceTest {
 
     @Test
     void categorizeTransactions_keywordAndTransfer() {
-        OllamaService svc = new OllamaService();
+        GroqService svc = new GroqService();
 
         List<TransactionInput> inputs = List.of(
             new TransactionInput("Zomato Order #123", 250.0, "DEBIT"),
@@ -27,7 +27,7 @@ class OllamaServiceTest {
 
     @Test
     void parseCategory_variousInputs() {
-        OllamaService svc = new OllamaService();
+        GroqService svc = new GroqService();
         assertEquals(Category.FOOD_AND_DINING, svc.parseCategory("food_and_dining"));
         assertEquals(Category.FOOD_AND_DINING, svc.parseCategory("Food And Dining"));
         assertEquals(Category.OTHER, svc.parseCategory("nonsense-category"));

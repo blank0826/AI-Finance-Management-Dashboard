@@ -5,7 +5,7 @@ import com.finance.entity.Transaction;
 import com.finance.entity.User;
 import com.finance.repository.TransactionRepository;
 import com.finance.repository.UserRepository;
-import com.finance.service.OllamaService;
+import com.finance.service.GroqService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +22,7 @@ public class TransactionController {
 
     @Autowired private TransactionRepository transactionRepo;
     @Autowired private UserRepository userRepo;
-    @Autowired private OllamaService ollamaService;
+    @Autowired private GroqService groqService;
 
     // ── Get all transactions (filtered by month/year) ─────────────────────────
 
@@ -124,12 +124,12 @@ public class TransactionController {
     private Transaction.Category autoCategorizeSingle(
             String description, double amount, String type) {
         try {
-            List<OllamaService.TransactionInput> inputs = List.of(
-                new OllamaService.TransactionInput(description, amount, type)
+            List<GroqService.TransactionInput> inputs = List.of(
+                new GroqService.TransactionInput(description, amount, type)
             );
-            List<String> results = ollamaService.categorizeTransactions(inputs);
+            List<String> results = groqService.categorizeTransactions(inputs);
             if (!results.isEmpty()) {
-                return ollamaService.parseCategory(results.get(0));
+                return groqService.parseCategory(results.get(0));
             }
         } catch (Exception e) {
             System.err.println("Auto-categorization failed: " + e.getMessage());

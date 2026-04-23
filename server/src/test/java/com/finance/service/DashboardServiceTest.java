@@ -21,7 +21,7 @@ class DashboardServiceTest {
     @Test
     void getSummary_aggregatesAndAiCalled() {
         TransactionRepository repo = mock(TransactionRepository.class);
-        OllamaService ollama = mock(OllamaService.class);
+        GroqService groqService = mock(GroqService.class);
 
         Transaction t = new Transaction();
         t.setDate(LocalDate.of(2026,4,1));
@@ -31,12 +31,12 @@ class DashboardServiceTest {
 
         when(repo.findByUserIdAndYearMonth(1L, 2026, 4)).thenReturn(Arrays.asList(t));
         when(repo.monthlySpendingTrend(1L)).thenReturn(Collections.emptyList());
-        when(ollama.generateMonthlySummary(Collections.singletonMap("FOOD_AND_DINING", 100.0), 100.0, 0.0, 2026,4))
+        when(groqService.generateMonthlySummary(Collections.singletonMap("FOOD_AND_DINING", 100.0), 100.0, 0.0, 2026,4))
             .thenReturn("Good month");
 
         DashboardService svc = new DashboardService();
         ReflectionTestUtils.setField(svc, "transactionRepo", repo);
-        ReflectionTestUtils.setField(svc, "ollamaService", ollama);
+        ReflectionTestUtils.setField(svc, "groqService", groqService);
 
         DashboardSummary s = svc.getSummary(1L, 2026, 4);
         assertEquals(BigDecimal.valueOf(100), s.getTotalSpending());

@@ -15,7 +15,7 @@ import java.util.*;
 public class DashboardService {
 
     @Autowired private TransactionRepository transactionRepo;
-    @Autowired private OllamaService ollamaService;
+    @Autowired private GroqService groqService;
 
     private static final Logger log = LoggerFactory.getLogger(DashboardService.class);
 
@@ -56,7 +56,7 @@ public class DashboardService {
         String aiSummary = "";
         if (!transactions.isEmpty()) {
             try {
-                aiSummary = ollamaService.generateMonthlySummary(
+                aiSummary = groqService.generateMonthlySummary(
                     categoryDoubles, totalSpending.doubleValue(),
                     totalIncome.doubleValue(), year, month);
             } catch (Exception e) {
