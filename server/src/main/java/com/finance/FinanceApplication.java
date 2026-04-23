@@ -15,5 +15,6 @@ public class FinanceApplication {
     public static void main(String[] args) {
         SpringApplication.run(FinanceApplication.class, args);
         log.info("FinanceApplication started");
+        System.out.println("PORT ENV = " + System.getenv("PORT"));
     }
 }
