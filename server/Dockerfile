@@ -1,14 +1,20 @@
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
+
 COPY gradlew .
 COPY gradle gradle
 COPY build.gradle .
 COPY settings.gradle .
 COPY src src
+
 RUN chmod +x gradlew && ./gradlew bootJar -x test --no-daemon
+
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
+
 COPY --from=builder /app/build/libs/*.jar app.jar
+
 EXPOSE 8080
-ENTRYPOINT ["java", "-Xmx300m", "-Xss512k", "-XX:+UseSerialGC", "-jar", "app.jar"]
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.profiles.active=$SPRING_PROFILES_ACTIVE -jar app.jar"]
