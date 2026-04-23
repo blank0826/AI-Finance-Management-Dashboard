@@ -31,11 +31,13 @@ import com.finance.entity.Transaction;
 @Service
 public class PdfParserService {
 
-    @Value("${app.ollama.base-url:http://localhost:11434}")
-    private String ollamaBaseUrl;
 
-    @Value("${app.ollama.model:qwen2.5:7b}")
-    private String ollamaModel;
+    @Value("${app.groq.api-key:}")
+    private String apiKey;
+
+    private static final String GROQ_URL =
+        "https://api.groq.com/openai/v1/chat/completions";
+    private static final String MODEL = "llama-3.1-8b-instant";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -527,10 +529,9 @@ public class PdfParserService {
 
     private String callOllamaForExtraction(String prompt) {
         try {
-            String url = ollamaBaseUrl + "/api/chat";
 
             Map<String, Object> body = new LinkedHashMap<>();
-            body.put("model", ollamaModel);
+            body.put("model", MODEL);
             body.put("messages", List.of(
                 Map.of("role", "system",
                        "content", "You are a precise data extraction assistant. " +
@@ -553,8 +554,9 @@ public class PdfParserService {
                 .build();
 
             HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
+                .uri(URI.create(GROQ_URL))
                 .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + apiKey)
                 .timeout(Duration.ofSeconds(300))
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();
