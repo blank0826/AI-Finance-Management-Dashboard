@@ -538,13 +538,7 @@ public class PdfParserService {
                                   "Extract data exactly as instructed. Output only JSON."),
                 Map.of("role", "user", "content", prompt)
             ));
-            body.put("stream", false);
-            body.put("think",  false);
-            body.put("options", Map.of(
-                "temperature", 0,
-                "num_predict", 4096,
-                "num_ctx",     8192
-            ));
+            body.put("temperature", 0);
 
             String requestBody = objectMapper.writeValueAsString(body);
 
